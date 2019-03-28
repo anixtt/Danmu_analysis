@@ -113,7 +113,6 @@ class getDanMuSocket():
                         dmDict['发送弹幕时间'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                         douyudb.insertData(dmDict, "danmu")
                         print(dmDict)
-                        danmuNum = danmuNum + 1
                 except:
                     continue
 
