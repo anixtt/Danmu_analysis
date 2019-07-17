@@ -1,0 +1,514 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+{% load staticfiles %}
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Danmu</title>
+    <script src="{% static '/danmu/js/jquery-3.4.0.min.js' %}"></script>
+    <style type="text/css">
+        ul li{
+            list-style: none;
+        }
+        #danmu{
+            width: 70%;
+            height: 630px;
+            overflow: scroll;
+        }
+        span{
+            margin-left: 70px;
+        }
+        #all{
+            float: left;
+            width: 100%;
+            height: 650px;
+        }
+        #segment{
+            position: absolute;
+            width: 28%;
+            height: 630px;
+            left: 71%;
+            top: 10px;
+        }
+        #user{
+            position: absolute;
+            width: 28%;
+            height: 630px;
+            left: 71%;
+            top: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="all">
+        <div id="danmu"></div>
+        <div id="segment"></div>
+        <div id="user"></div>
+        <input id="start-get-danmu" type="button" value="Start"/>
+        <input id="end-get-danmu" type="button" value="End"/>
+    </div>
+</body>
+<script>
+    // var roomName = JSON.parse('{{ room_name_json|safe }}');
+    var dm_div = document.querySelector('#danmu');
+    var dm = document.createElement('ul');
+    var segm = document.querySelector('#segment');
+    var us = document.querySelector('#user');
+    // $('body').mousemove(function(e) {
+    //     var xx = e.originalEvent.x || e.originalEvent.layerX || 0;
+    //     var yy = e.originalEvent.y || e.originalEvent.layerY || 0;
+    //     return {x: xx, y: yy}
+    // });
+    //     var divx1 = dm_div.offsetLeft;
+    //     var divy1 = dm_div.offsetTop;
+    //     var divx2 = dm_div.offsetLeft + dm_div.offsetWidth;
+    //     var divy2 = dm_div.offsetTop + dm_div.offsetHeight;
+    //     if( xx < divx1 || xx > divx2 || yy< divy1 || yy > divy2) {
+    //         dm_div.scrollTop = dm_div.scrollHeight;
+    //         }
+    //     else {
+    //         dm_div.scrollTop = dm_div.scrollTop;
+    //     }
+    //     }
+    // );
+    var danmus = '';
+    var danmu_jieba = '';
+    var danmu_jieba_num = 0;
+    var userid = {};
+    var s_m = new Array();
+    var scroolflag = true;
+    var aimsecond = new Date().getSeconds() + 5;
+    var aimminute = new Date().getMinutes();
+    var aimhour = new Date().getHours();
+    var aimday = new Date().getDay();
+    var aimmonth = new Date().getMonth();
+    var usernum = 0;
+    if (aimsecond >= 60){
+        aimsecond -= 60;
+        aimminute += 1
+    }
+    if (aimminute == 60){
+        aimhour += 1
+    }
+    // dm_div.onscroll = function(){
+    //         if (dm_div.scrollTop != dm_div.scrollHeight){
+    //             console.log('改变前top'+dm_div.scrollTop)
+    //             console.log('改变前height'+dm_div.scrollHeight)
+    //             dm_div.scrollHeight = dm_div.scrollTop
+    //             console.log('改变后top'+dm_div.scrollTop)
+    //             console.log('改变后height'+dm_div.scrollHeight)
+    //         }
+    //         else {
+    //             dm_div.scrollTop = dm_div.scrollHeight;
+    //         }
+    //     };
+    var danmuSocket = new WebSocket(
+        'ws://127.0.0.1:8000/danmu/');
+    // var danmuSocket = new WebSocket(
+    //     'ws://127.0.0.1:8000/danmu/'+roomName+'/');
+    // var danmuSocket1 = new WebSocket(
+    //     'ws://127.0.0.1:8000/danmu/'+roomName+'/');
+    danmuSocket.onopen = function(){
+    };
+    dm.setAttribute('id', 'danmus');
+    dm_div.appendChild(dm);
+    var dms = '';
+    danmuSocket.onmessage= function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        // var message1 = data['message1'];
+        // if (message != null && message.length != 0) {
+        if (document.getElementById(message['_id'])) {
+            return -1;
+        }
+        var nowtimesecond = new Date().getSeconds();
+        var nowtimeminute = new Date().getMinutes();
+        var nowtimehour = new Date().getHours();
+        var nowtimeday = new Date().getDay();
+        var nowtimemonth = new Date().getMonth();
+        // if (nowtimemonth == aimmonth && nowtimeday == aimday &&
+        //     nowtimehour == aimhour && nowtimeminute != aimminute &&
+        //     nowtimesecond != aimsecond && nowtimeminute < aimminute){
+        if ((nowtimesecond < aimsecond && nowtimeminute <= aimminute && nowtimehour <= aimhour) ||
+            (nowtimesecond > aimsecond && nowtimeminute < aimminute && nowtimehour <= aimhour) ||
+            (nowtimesecond > aimsecond && nowtimeminute > aimminute && nowtimehour < aimhour)){
+            if (userid.hasOwnProperty(message['用户ID'])) {
+                userid[message['用户ID']] += 1
+            }
+            else {
+                console.log(9013901);
+                userid[message['用户ID']] = 2
+            }
+        }
+        // if ((nowtimemonth == aimmonth && nowtimeday == aimday &&
+        //      nowtimehour == aimhour && (nowtimesecond == aimsecond || nowtimeminute > aimminute)) ||
+        //     (nowtimemonth == aimmonth && nowtimeday == aimday && nowtimehour > aimhour) ||
+        //     (nowtimemonth == aimmonth && nowtimeday > aimday) ||
+        //     (nowtimemonth > aimmonth)){
+        if ((nowtimesecond >= aimsecond && nowtimeminute == aimminute && nowtimehour == aimhour) ||
+            (nowtimesecond <= aimsecond && nowtimeminute > aimminute && nowtimehour == aimhour) ||
+            (nowtimesecond <= aimsecond && nowtimeminute <= aimminute && nowtimehour > aimhour)){
+            for (var i in userid){
+                if (userid[i] >= 3){
+                    s_m.push(i)
+                }
+            }
+            aimsecond = nowtimesecond + 5;
+            aimminute = nowtimeminute;
+            aimhour = nowtimehour;
+            if (aimsecond >= 60){
+                aimsecond -= 60;
+                aimminute += 1
+            }
+            if (aimminute == 60){
+                aimhour += 1
+            }
+            userid = {};
+
+            if (s_m.length > 0 && s_m.length > usernum){
+            us.innerHTML = '';
+            $.ajax({
+                url: '/danmu/suspectuser',
+                type: 'POST',
+                data: {
+                    'userlist': JSON.stringify(s_m)
+                },
+                success: function(result) {
+                    var udata = JSON.parse(result);
+                    var uda = udata['udata'];
+                    uda = JSON.parse(uda);
+                    for (var i in uda) {
+                        var tdmu = document.createElement('span');
+                        tdmu.setAttribute('id', i);
+                        tdmu.innerText = uda[i];
+                        us.appendChild(tdmu);
+                    }
+                    usernum = s_m.length;
+                    }
+                })
+            }
+
+        }
+        console.log(nowtimehour, nowtimeminute, nowtimesecond);
+        console.log(aimhour, aimminute, aimsecond);
+        console.log(userid);
+
+        var danmu = document.createElement('li');
+        danmu.setAttribute('id', message['_id']);
+        dm.appendChild(danmu);
+        var danmu_div = document.createElement('div');
+        danmu_div.setAttribute('classname', 'singel_danmu');
+        danmu_div.style.width = '100%';
+        danmu_div.style.height = '20px';
+        danmu_div.style.marginBottom = '10px';
+        danmu_div.style.font = '10px';
+        danmu_div.style.cssFloat = 'left';
+        danmu_div.style.marginLeft = '-80px';
+        danmu.appendChild(danmu_div);
+        // '1': '红色', '2': '蓝色', '3': '绿色', '4': '橙色',
+        //                                '5': '紫色', '6': '粉色', '无': '无'
+        var user_level = document.createElement('span');
+        var royal_level = document.createElement('span');
+        var fans_level = document.createElement('span');
+        danmu_div.appendChild(user_level);
+        danmu_div.appendChild(royal_level);
+        danmu_div.appendChild(fans_level);
+        user_level.innerText = '等级：' + message['等级'];
+        if (message['贵族'] == '无') {
+            danmu_div.removeChild(royal_level);
+        }
+        else {
+            royal_level.style.marginLeft = '20px';
+            switch (message['贵族']) {
+                case '游侠':
+                    var str1 = "{% static 'danmu/img/游侠.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str1 + '>';
+                    break;
+                case '骑士':
+                    var str2 = "{% static 'danmu/img/骑士.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str2 + '>';
+                    break;
+                case '子爵':
+                    var str3 = "{% static 'danmu/img/子爵.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str3 + '>';
+                    break;
+                case '伯爵':
+                    var str4 = "{% static 'danmu/img/伯爵.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str4 + '>';
+                    break;
+                case '公爵':
+                    var str5 = "{% static 'danmu/img/公爵.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str5 + '>';
+                    break;
+                case '国王':
+                    var str6 = "{% static 'danmu/img/国王.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str6 + '>';
+                    break;
+                case '皇帝':
+                    var str7 = "{% static 'danmu/img/皇帝.png' %}";
+                    royal_level.innerHTML = '<img style="display: inline-block;height: 98%;vertical-align: middle" src=' + str7 + '>';
+                    break;
+            }
+        }
+        if (message['粉丝牌名字'] == '无') {
+            danmu_div.removeChild(fans_level)
+        }
+        else {
+            fans_level.innerText = message['粉丝牌名字'] + ' ' + message['粉丝牌等级'];
+            fans_level.style.marginLeft = '20px';
+            if (parseInt(message['粉丝牌等级']) >= 1 && parseInt(message['粉丝牌等级']) < 6) {
+                fans_level.style.backgroundColor = '#4C98FA';
+            }
+            if (parseInt(message['粉丝牌等级']) >= 6 && parseInt(message['粉丝牌等级']) < 11) {
+                fans_level.style.backgroundColor = '#44B0A7';
+            }
+            if (parseInt(message['粉丝牌等级']) >= 11 && parseInt(message['粉丝牌等级']) < 16) {
+                fans_level.style.backgroundColor = '#F5A80C';
+            }
+            if (parseInt(message['粉丝牌等级']) >= 16 && parseInt(message['粉丝牌等级']) < 21) {
+                fans_level.style.backgroundColor = '#FD6F13';
+            }
+            if (parseInt(message['粉丝牌等级']) >= 21 && parseInt(message['粉丝牌等级']) < 26) {
+                fans_level.style.backgroundColor = '#E92150';
+            }
+            if (parseInt(message['粉丝牌等级']) >= 26 && parseInt(message['粉丝牌等级']) < 30) {
+                fans_level.style.backgroundColor = '#8135DF';
+            }
+            if (parseInt(message['粉丝牌等级']) >= 30) {
+                fans_level.style.backgroundColor = '#7B2AF0';
+            }
+        }
+        var user_name = document.createElement('span');
+        user_name.style.marginLeft = '40px';
+        var user_danmu = document.createElement('span');
+        user_danmu.style.marginLeft = '2px';
+        if (message['弹幕颜色'] == '蓝色') {
+            user_danmu.style.color = '#1B6FEB';
+        }
+        if (message['弹幕颜色'] == '绿色') {
+            user_danmu.style.color = '#6DC33F';
+        }
+        if (message['弹幕颜色'] == '粉色') {
+            user_danmu.style.color = '#FB4CA4';
+        }
+        if (message['弹幕颜色'] == '橙色') {
+            user_danmu.style.color = '#FC6906';
+        }
+        if (message['弹幕颜色'] == '紫色') {
+            user_danmu.style.color = '#880EF1';
+        }
+        if (message['弹幕颜色'] == '红色') {
+            user_danmu.style.color = '#FC0005';
+        }
+        var danmu_time = document.createElement('span');
+        // if (message['sign'] == 1){
+        //     console.log('123');
+        // }
+        // if (message['sign'] == 1){
+        //     console.log('21341')
+        // }
+        danmu_div.appendChild(user_name);
+        danmu_div.appendChild(user_danmu);
+        danmu_div.appendChild(danmu_time);
+        user_name.innerText = message['昵称'];
+        user_danmu.innerText = ':  ' + message['弹幕内容'];
+        user_name.style.color = '#3A8CFD';
+        danmu_time.innerText = message['发送弹幕时间'];
+        if (document.getElementsByTagName('li').length > 150) {
+            var u = document.getElementById('danmus');
+            u.removeChild(u.childNodes[0]);
+        }
+        // dm_div.scrollTop = dm_div.scrollHeight - 630;
+        // dm_div.onscroll = function(){
+        //     dm_div.scrollHeight = dm_div.scrollTop
+        // };
+        if (scroolflag){
+            dm_div.scrollTop = dm_div.scrollHeight - 630;
+        }
+        dm_div.onscroll = function () {
+            if (dm_div.scrollTop != dm_div.scrollHeight - 630){
+                scroolflag = false
+            }
+            if (dm_div.scrollTop == dm_div.scrollHeight - 630){
+                scroolflag = true
+            }
+        }
+
+        danmus += message['弹幕内容'] + ' ';
+        danmu_jieba += message['弹幕内容'] + '\r\n';
+        danmu_jieba_num += 1;
+        if (danmus.length > 300 && (danmu_jieba.length - danmu_jieba_num * 2) > 300){
+            $.ajax({
+                url: '/danmu/analyse',
+                type: 'POST',
+                data: {
+                    'danmus': danmus
+                },
+                success: function(result) {
+                    if (document.getElementById('hotword')){
+                        segm.removeChild(document.getElementById('hotword'));
+                    }
+                    if (document.getElementById('sg')){
+                        segm.removeChild(document.getElementById('sg'));
+                    }
+                    if (document.getElementById('rnm')){
+                        segm.removeChild(document.getElementById('rnm'));
+                    }
+                    if (result != null){
+                        var segtitle = document.createElement('div');
+                        segtitle.setAttribute('id', 'sg');
+                        segm.appendChild(segtitle);
+                        segtitle.innerText = '热词:';
+                        var w_list = document.createElement('div');
+                        w_list.setAttribute('id', 'hotword');
+                        segm.appendChild(w_list);
+                        var resultword = result.split('!@##$$$%%%^^^&&&***(((*&)^')[0];
+                        var resultdosnt_match = result.split('!@##$$$%%%^^^&&&***(((*&)^')[1];
+                        for (var i = 0; i < resultword.split().length; i++) {
+                            var w = document.createElement('span');
+                            w_list.appendChild(w);
+                            w.innerText = resultword.split()[i];
+                        }
+                        var result_not_match = document.createElement('div');
+                        result_not_match.setAttribute('id', 'rnm');
+                        w_list.appendChild(result_not_match);
+                        result_not_match.innerText = '不符合语义相似度: '+resultdosnt_match
+                    }
+                }
+            });
+            $.ajax({
+                url: '/danmu/jiebaanalyse',
+                type: 'POST',
+                data: {
+                    'danmu_jieba': danmu_jieba
+                },
+                success: function(result) {
+                    if (document.getElementById('hotword1')){
+                        segm.removeChild(document.getElementById('hotword1'));
+                    }
+                    if (document.getElementById('sgjb')){
+                        segm.removeChild(document.getElementById('sgjb'));
+                    }
+                    if (document.getElementById('rjnm')){
+                        segm.removeChild(document.getElementById('rjnm'));
+                    }
+                    if (result != null){
+                        var segtitle_jieba = document.createElement('div');
+                        segtitle_jieba.setAttribute('id', 'sgjb');
+                        segm.appendChild(segtitle_jieba);
+                        segtitle_jieba.innerText = 'jieba热词:';
+                        var w_list = document.createElement('div');
+                        w_list.setAttribute('id', 'hotword1');
+                        segm.appendChild(w_list);
+                        var resultjiebaword = result.split('!@##$$$%%%^^^&&&***(((*&)^')[0];
+                        var resultjiebadosnt_match = result.split('!@##$$$%%%^^^&&&***(((*&)^')[1];
+                        for (var i = 0; i < resultjiebaword.split().length; i++) {
+                            var w = document.createElement('span');
+                            w_list.appendChild(w);
+                            w.innerText = resultjiebaword.split()[i];
+                        }
+                        var result_jieba_not_match = document.createElement('div');
+                        result_jieba_not_match.setAttribute('id', 'rjnm');
+                        w_list.appendChild(result_jieba_not_match);
+                        result_jieba_not_match.innerText = '不符合语义相似度: '+resultjiebadosnt_match
+                    }
+                }
+            });
+            danmus = '';
+            danmu_jieba = '';
+            danmu_jieba_num = 0;
+        }
+        // websocket服务端直接分词
+        // var words = message['分词'];
+        // if (document.getElementById('hotword')){
+        //     segm.removeChild(document.getElementById('hotword'));
+        // }
+        // if (words != null){
+        //     var w_list = document.createElement('div');
+        //     w_list.setAttribute('id', 'hotword');
+        //     segm.appendChild(w_list);
+        //     console.log(words);
+        //     for (var i = 0; i < words.length; i++) {
+        //         var w = document.createElement('span');
+        //         w_list.appendChild(w);
+        //         w.innerText = words[i][0];
+        //     }
+        // }
+
+
+
+
+
+        // }
+        // if (message1 != null && message1.length != 0) {
+        //     danmuSocket1.send(JSON.stringify({
+        //         'message1': dms
+        //     }));
+        //     console.log(message1)
+        // }
+            // '房间ID': x['房间ID'],
+            // '用户ID': x['用户ID'],
+            // '昵称': x['昵称'],
+            // '弹幕内容': x['弹幕内容'],
+            // '等级': x['等级'],
+            // '贵族': x['贵族'],
+            // '弹幕颜色': x['弹幕颜色'],
+            // '粉丝牌名字': x['粉丝牌名字'],
+            // '粉丝牌等级': x['粉丝牌等级'],
+            // '粉丝牌房间ID': x['粉丝牌房间ID'],
+            // '发送弹幕时间': x['发送弹幕时间']
+    };
+
+    // danmuSocket1.onmessage = function(e){
+    //     var data = JSON.parse(e.data);
+    //     var message = data['message1'];
+    //
+    // };
+    // function se(){
+    //     danmuSocket.send(JSON.stringify({
+    //             'message': dms
+    //         }));
+    //         console.log(123);
+    // }
+    // window.setInterval(se, 1500);
+    danmuSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+    // danmuSocket1.onclose = function(e) {
+    //     console.error('Chat socket closed unexpectedly');
+    // };
+
+    // document.querySelector('#chat-message-input').focus();
+    // document.querySelector('#chat-message-input').onkeyup = function(e) {
+    //     if (e.keyCode === 13) {  // enter, return
+    //         document.querySelector('#chat-message-submit').click();
+    //     }
+    // };
+    //
+    document.querySelector('#start-get-danmu').onclick = function(e) {
+            danmuSocket.send(JSON.stringify({
+                'message': 'Start'
+            }));
+            // danmuSocket1.send(JSON.stringify({
+            //     'message1': 'Start1'
+            // }));
+        };
+    document.querySelector('#end-get-danmu').onclick = function(e) {
+            danmuSocket.send(JSON.stringify({
+                'message': 'End'
+            }));
+            // danmuSocket1.send(JSON.stringify({
+            //     'message1': 'End'
+            // }));
+        };
+    // document.querySelector('#chat-message-submit').onclick = function(e) {
+    //     var messageInputDom = document.querySelector('#chat-message-input');
+    //     var message = messageInputDom.value;
+    //     chatSocket.send(JSON.stringify({
+    //         'message': message
+    //     }));
+    //
+    //     messageInputDom.value = '';
+    // };
+</script>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>show</title>
+    <script src="{% static '/danmu/js/echarts.js' %}"></script>
+</head>
+<body>
+    <!--弹幕数量排行（每日）-->
+    <div id="word"></div>>
+    <div id="danmu_num_daily" style="width: 1200px;height:400px;"></div>
+    <div id="user_danmu_all" style="width: 1000px;height:400px;"></div>
+    <script type="text/javascript">
+        var danmu_num_daily = echarts.init(document.getElementById('danmu_num_daily'));
+
+        var danmu_everyday_sort = JSON.parse('{{  }}');
+        var danmu_string = JSON.parse('{{ dict|safe }}');
+        var danmu_list = JSON.parse('{{ danmu_list|safe }}');
+        console.log(danmu_string);
+        for (i in danmu_string){
+            var w = document.createElement('span');
+            var f = document.createElement('span');
+            w.innerText = i+':';
+            f.innerText = danmu_string[i];
+            w.style.marginLeft = '15px';
+            f.style.marginLeft = '15px';
+            document.getElementById('word').appendChild(w);
+            document.getElementById('word').appendChild(f);
+        }
+        var date_list = []; // 排行日期
+        var danmunum_list = []; // 日期弹幕数量
+        for(var i = 0;i < danmu_list.length;i++){
+            date_list.push(danmu_list[i]['_id']);
+            danmunum_list.push(danmu_list[i]['count'])
+        }
+        // 柱子颜色
+        var danmu_color_list = ['#EE0000', '#DD0000', '#CC0000', '#BB0000', '#AA0000', '#990000',
+                            '#880000', '#770000', '#660000', '#550000'];
+        // 指定图表的配置项和数据
+        var danmu_bar_option = {
+            title: {
+                text: '弹幕数量排行'
+            },
+            tooltip: {},
+            legend: {
+                data:['弹幕数量']
+            },
+            xAxis: {
+                data: date_list
+            },
+            yAxis: {},
+            series: [{
+                name: '弹幕数量',
+                type: 'bar',
+                data: danmunum_list,
+                itemStyle:{
+                    normal:{
+                        color: function (params) {
+                            return danmu_color_list[params.dataIndex];
+                        }
+                    }
+                }
+            }]
+        };
+
+    // <!--发弹幕最多排行（总）-->
+    //     var user_danmu_all = echarts.init(document.getElementById('user_danmu_all'));
+    //     var user_list = JSON.parse('{{ user_list|safe }}');
+    //     // var all_day = JSON.parse('{{ all_day|safe }}');
+    //     // var d = JSON.parse('{{ d|safe }}');
+    //     var user_nickname = []; // 用户昵称
+    //     var day_list = []; // 所有日期
+    //     var data_list = [];
+    //     for(var i = 0;i < user_list.length;i++){
+    //         user_nickname.push(user_list[i]['昵称']);
+    //     }
+    //     // for(var i = 0;i < all_day.length;i++){
+    //     //     day_list.push(all_day[i]['_id'])
+    //     // }
+    //     // for(let x of user_list){
+    //     //     console.log(x);
+    //     //     var l = [];
+    //     //     for(let y of day_list){
+    //     //         l.push(x[y]);
+    //     //         console.log(l)
+    //     //     }
+    //     //     data_list.push(l);
+    //     //     console.log(data_list)
+    //     // }
+    //     var user_line_option = {
+    //         title: {
+    //             text: '发弹幕数前十（弹幕数量排行每日）'
+    //         },
+    //         tooltip: {
+    //             trigger: 'axis'
+    //         },
+    //         legend: {
+    //             data: user_nickname,
+    //             left: '40%'
+    //         },
+    //         grid: {
+    //             left: '3%',
+    //             right: '4%',
+    //             bottom: '3%',
+    //             containLabel: true
+    //         },
+    //         xAxis: {
+    //             type: 'category',
+    //             boundaryGap: false,
+    //             data: date_list
+    //         },
+    //         yAxis: {
+    //             type: 'value'
+    //         },
+    //         series: [
+    //             {
+    //                 name: user_nickname[0],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [4,180,266,1,41,169,106,33,52,68]
+    //             },
+    //             {
+    //                 name: user_nickname[1],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [0,3,201,0,206,145,18,29,12,195]
+    //             },
+    //             {
+    //                 name: user_nickname[2],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [0,0,231,4,116.60,135,0,0,152]
+    //             },
+    //             {
+    //                 name: user_nickname[3],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [0,63,16,66,137,156,38,17,13,161]
+    //             },
+    //             {
+    //                 name: user_nickname[4],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [33,125,113,14,72,14,67,10,24,115]
+    //             },
+    //             {
+    //                 name: user_nickname[5],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [2,52,178,0,109,0,80,48,0,14]
+    //             },
+    //             {
+    //                 name: user_nickname[6],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [0,60,130,4,24,142,82,88,21,44]
+    //             },
+    //             {
+    //                 name: user_nickname[7],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [1,24,237,0,52,122,41,42,0,98]
+    //             },
+    //             {
+    //                 name: user_nickname[8],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [465,153,0,0,0,0,0,0,0,0]
+    //             },
+    //             {
+    //                 name: user_nickname[9],
+    //                 type:'line',
+    //                 stack: '用户弹幕',
+    //                 data: [0,73,77,49,98,85,25,33,38,105]
+    //             }
+    //         ]
+    //     };
+        danmu_num_daily.setOption(danmu_bar_option);
+    //     user_danmu_all.setOption(user_line_option);
+    </script>
+</body>
+</html>
