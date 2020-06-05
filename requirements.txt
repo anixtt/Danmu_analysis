@@ -1,7 +1,7 @@
 pymongo==3.7.2
 fake_useragent==0.1.11
 channels==2.1.7
-Django==2.1.11
+Django==2.2.13
 asgiref==2.2.0
 gensim==3.7.1
 jieba==0.39
